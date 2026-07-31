@@ -15,12 +15,11 @@ jobs:
     - name: Unzip project
       run: |
         unzip -o *.zip
-        # Eğer zipten çıkan klasör oluştuysa içeriği ana dizine taşı
-        if [ -d "DimensionWarriors_MultiLoader_Forge_Fabric_1.20.1-26.2" ]; then
-          cp -r DimensionWarriors_MultiLoader_Forge_Fabric_1.20.1-26.2/* . || true
-        fi
-        if [ -d "DimensionWarriors" ]; then
-          cp -r DimensionWarriors/* . || true
+        # Zipten çıkan klasörün adını bulup içindeki her şeyi ana dizine taşıyalım
+        DIR_NAME=$(ls -d */ | grep -v '^\.' | head -n 1)
+        if [ -n "$DIR_NAME" ]; then
+          echo "Klasör bulundu: $DIR_NAME"
+          cp -r "$DIR_NAME"* . || true
         fi
 
     - name: Set up JDK 17
@@ -29,16 +28,21 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Make gradlew executable
-      run: chmod +x gradlew
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
 
-    - name: Build with Gradle Wrapper
-      run: ./gradlew build --no-daemon
+    - name: Build Project
+      run: |
+        if [ -f "./gradlew" ]; then
+          chmod +x gradlew
+          ./gradlew build --no-daemon
+        else
+          gradle build --no-daemon
+        fi
 
     - name: Upload Built Jar Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: Built-Minecraft-Mods
         path: |
-          build/libs/*.jar
-          */build/libs/*.jar
+          **/build/libs/*.jar
