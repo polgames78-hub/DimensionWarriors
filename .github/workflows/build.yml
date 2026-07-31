@@ -15,8 +15,12 @@ jobs:
     - name: Unzip project
       run: |
         unzip -o *.zip
+        # Eğer zipten çıkan klasör oluştuysa içeriği ana dizine taşı
         if [ -d "DimensionWarriors_MultiLoader_Forge_Fabric_1.20.1-26.2" ]; then
-          cp -r DimensionWarriors_MultiLoader_Forge_Fabric_1.20.1-26.2/* .
+          cp -r DimensionWarriors_MultiLoader_Forge_Fabric_1.20.1-26.2/* . || true
+        fi
+        if [ -d "DimensionWarriors" ]; then
+          cp -r DimensionWarriors/* . || true
         fi
 
     - name: Set up JDK 17
@@ -25,14 +29,11 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-
     - name: Make gradlew executable
-      run: chmod +x gradlew || true
+      run: chmod +x gradlew
 
-    - name: Build with Gradle
-      run: gradle build
+    - name: Build with Gradle Wrapper
+      run: ./gradlew build --no-daemon
 
     - name: Upload Built Jar Artifacts
       uses: actions/upload-artifact@v4
